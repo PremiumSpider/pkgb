@@ -664,6 +664,7 @@ const [storageInfo, setStorageInfo] = useState({ totalSize: 0, imageSize: 0 });
   const [isLocked, setIsLocked] = useState(true);
   const [unlockSelections, setUnlockSelections] = useState(new Set());
   const [showProbCalc, setShowProbCalc] = useState(false);
+  const [lockFlash, setLockFlash] = useState(false);
   const [currentView, setCurrentView] = useState('bags')
   const [insuranceImages, setInsuranceImages] = useState([null, null, null, null, null])
   const [currentInsuranceIndex, setCurrentInsuranceIndex] = useState(0)
@@ -1149,7 +1150,12 @@ const handleBagCountChange = (increment) => {
   
 
  const toggleNumber = (number) => {
-  if (isLocked) return;
+  if (isLocked) {
+    // Flash the lock when trying to interact in locked state
+    setLockFlash(true);
+    setTimeout(() => setLockFlash(false), 600);
+    return;
+  }
 
   const newSelected = new Set(selectedNumbers);
   const newChases = new Set(chaseNumbers);
@@ -2357,11 +2363,15 @@ ${!isLocked && unlockSelections.has(number)
 {isLocked && (
   <motion.div
     initial={{ opacity: 0, scale: 0.5 }}
-    animate={{ opacity: 1, scale: 1 }}
+    animate={{ 
+      opacity: lockFlash ? 0.8 : 0.15, 
+      scale: lockFlash ? 1.1 : 1 
+    }}
     exit={{ opacity: 0, scale: 0.5 }}
+    transition={{ duration: lockFlash ? 0.1 : 0.3 }}
     className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
   >
-    <div className="text-[10rem] opacity-15 text-white drop-shadow-2xl">
+    <div className="text-[10rem] text-white drop-shadow-2xl">
       🔒
     </div>
   </motion.div>
