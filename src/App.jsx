@@ -933,6 +933,15 @@ const bountyTimeout = useRef(null)
       positionY: 0
     }
   })
+
+  // Add state for saved zoom location
+  const [savedZoomState, setSavedZoomState] = useState(() => {
+    const saved = localStorage.getItem('savedZoomState')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  // Add ref for TransformWrapper
+  const transformRef = useRef(null)
 const Sparkle = ({ speed = 1 }) => {
   const randomX = Math.random() * 100;
   const randomY = Math.random() * 100;
@@ -1802,11 +1811,38 @@ const handleImageClick = (e) => {
 
 
 
+// ZL - Save current zoom and location
+const handleZoomLocationSave = () => {
+  if (transformRef.current) {
+    const currentState = transformRef.current.instance.transformState
+    const saveState = {
+      scale: currentState.scale,
+      positionX: currentState.positionX,
+      positionY: currentState.positionY
+    }
+    setSavedZoomState(saveState)
+    localStorage.setItem('savedZoomState', JSON.stringify(saveState))
+  }
+}
+
+// ZR - Reset to saved zoom and location
+const handleZoomReset = () => {
+  if (transformRef.current && savedZoomState) {
+    transformRef.current.setTransform(
+      savedZoomState.positionX,
+      savedZoomState.positionY,
+      savedZoomState.scale,
+      200 // animation duration in ms
+    )
+  }
+}
+
 const handleReset = () => {
   try {
     localStorage.removeItem('gachaBagState')
     localStorage.removeItem('gachaBagImage')
     localStorage.removeItem('gachaBagZoomState')
+    localStorage.removeItem('savedZoomState')
     localStorage.removeItem('insuranceImages')
     localStorage.removeItem('insuranceMarks')
     localStorage.removeItem('bounties')
@@ -1826,6 +1862,7 @@ const handleReset = () => {
     setMarks([])
     setMarkSize(4)
     setZoomState({ scale: 1, positionX: 0, positionY: 0 })
+    setSavedZoomState({ scale: 1, positionX: 0, positionY: 0 })
     setShowResetConfirm(false)
     setInsuranceImages([null, null, null, null, null])
     setInsuranceMarks([[], [], [], [], []])
@@ -2576,8 +2613,30 @@ ${!isLocked && unlockSelections.has(number)
     )}
   </div>
 
-  {/* Right side controls - Chase count and -1C */}
+  {/* Right side controls - ZL, ZR, Chase count and -1C */}
   <div className="flex gap-4 items-center">
+    {/* ZL Button - Save zoom location */}
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={handleZoomLocationSave}
+      className="w-20 h-20 bg-green-500/30 hover:bg-green-500/40 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg transition-colors border border-green-400/30"
+    >
+      ZL
+    </motion.button>
+
+    {/* ZR Button - Reset to saved zoom location (only show when there's a saved state) */}
+    {savedZoomState && (
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={handleZoomReset}
+        className="w-20 h-20 bg-purple-500/30 hover:bg-purple-500/40 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg transition-colors border border-purple-400/30"
+      >
+        ZR
+      </motion.button>
+    )}
+
     <motion.button
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
@@ -2660,6 +2719,7 @@ ${!isLocked && unlockSelections.has(number)
   <div className="h-full w-full">
     {prizeImage ? (
       <TransformWrapper
+        ref={transformRef}
         initialScale={zoomState.scale}
         initialPositionX={zoomState.positionX}
         initialPositionY={zoomState.positionY}
