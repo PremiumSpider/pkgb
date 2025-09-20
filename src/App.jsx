@@ -721,7 +721,8 @@ const [hasImages, setHasImages] = useState(false);
   '/master.png',
   '/poke.png'
 ];
-const [currentTargetIndex, setCurrentTargetIndex] = useState(0);
+  const [currentTargetIndex, setCurrentTargetIndex] = useState(0);
+  const [fontSize, setFontSize] = useState(2); // Default font size
 
 const LockButton = ({ isLocked, onToggle }) => (
   <motion.button
@@ -2320,16 +2321,37 @@ useEffect(() => {
       >
         Reset
       </button>
-        <button
-    onClick={() => setUseStoneStyle(!useStoneStyle)}
-    className={`px-4 py-2 text-white rounded-lg transition-colors ${
-      useStoneStyle 
-        ? 'bg-slate-600 hover:bg-slate-700' 
-        : 'bg-purple-600 hover:bg-purple-700'
-    }`}
-  >
-    {useStoneStyle ? 'Stone' : 'Purple'}
-  </button>
+      <button
+        onClick={() => setUseStoneStyle(!useStoneStyle)}
+        className={`px-4 py-2 text-white rounded-lg transition-colors ${
+          useStoneStyle 
+            ? 'bg-slate-600 hover:bg-slate-700' 
+            : 'bg-purple-600 hover:bg-purple-700'
+        }`}
+      >
+        {useStoneStyle ? 'Stone' : 'Purple'}
+      </button>
+
+      <div className="flex items-center gap-2">
+        <span className="text-base font-medium text-white">Font Size:</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFontSize(prev => Math.max(1, prev - 1))}
+            className="w-10 h-10 flex items-center justify-center bg-black/30 hover:bg-black/40 text-white rounded-lg text-xl font-bold transition-colors"
+          >
+            -T
+          </button>
+          <span className="text-xl font-bold text-white w-10 text-center">
+            {fontSize}
+          </span>
+          <button
+            onClick={() => setFontSize(prev => Math.min(7, prev + 1))}
+            className="w-10 h-10 flex items-center justify-center bg-black/30 hover:bg-black/40 text-white rounded-lg text-xl font-bold transition-colors"
+          >
+            +T
+          </button>
+        </div>
+      </div>
     </div>
   </motion.div>
 )}
@@ -2349,13 +2371,19 @@ useEffect(() => {
             </AnimatePresence>
             
             <div className={`grid ${gridCols} gap-2 mx-4 flex-1 h-[calc(100vh-280px)] relative`}>
-{numbers.map((number) => (
+{numbers.map((number) => {
+  // Calculate inverse padding based on font size
+  const basePadding = 16; // Base padding in pixels
+  const paddingAdjustment = (fontSize - 2) * 4; // Adjust by 4px per font size level
+  const dynamicPadding = Math.max(4, basePadding - paddingAdjustment); // Minimum 4px padding
+  
+  return (
 <motion.div
   key={number}
   onClick={() => toggleNumber(number)}
 className={`
   relative flex items-center justify-center 
-  rounded-xl cursor-pointer text-xl font-bold
+  rounded-xl cursor-pointer font-bold
   ${
     chaseNumbers.has(number)
       ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-white'
@@ -2375,7 +2403,9 @@ ${!isLocked && unlockSelections.has(number)
 `}
   style={{
     '--flash-animation-name': `flash${animationKey}`,
-    '--border-animation-name': `rainbow${animationKey}`
+    '--border-animation-name': `rainbow${animationKey}`,
+    fontSize: `${fontSize * 0.5 + 0.5}rem`, // Dynamic font size: 1rem at size 1, 4rem at size 7
+    padding: `${dynamicPadding}px`
   }}
   whileHover={{ scale: 1.05 }}
   whileTap={{ scale: 0.95 }}
@@ -2394,7 +2424,8 @@ ${!isLocked && unlockSelections.has(number)
     <SparklesEffect level={shimmerLevel} />
   )}
 </motion.div>
-))}
+);
+})}
 
 {/* Big transparent lock overlay when locked */}
 {isLocked && (
