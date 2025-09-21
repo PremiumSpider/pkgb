@@ -694,6 +694,8 @@ const [storageInfo, setStorageInfo] = useState({ totalSize: 0, imageSize: 0 });
 const [shimmerLevel, setShimmerLevel] = useState(1) // 0 = off, 1-3 = shine levels
   const [showMinusPopup, setShowMinusPopup] = useState(false);
 const [showPlusPopup, setShowPlusPopup] = useState(false);
+const [showZLPopup, setShowZLPopup] = useState(false);
+const [showZRPopup, setShowZRPopup] = useState(false);
 const [bounties, setBounties] = useState([])
 const [currentBountyIndex, setCurrentBountyIndex] = useState(0)
   const [bountyText, setBountyText] = useState('')
@@ -1823,6 +1825,8 @@ const handleZoomLocationSave = () => {
     }
     setSavedZoomState(saveState)
     localStorage.setItem('savedZoomState', JSON.stringify(saveState))
+    setShowZLPopup(true)
+    setTimeout(() => setShowZLPopup(false), 1000)
   }
 }
 
@@ -1835,6 +1839,8 @@ const handleZoomReset = () => {
       savedZoomState.scale,
       200 // animation duration in ms
     )
+    setShowZRPopup(true)
+    setTimeout(() => setShowZRPopup(false), 1000)
   }
 }
 
@@ -2151,8 +2157,8 @@ useEffect(() => {
 
   <div className="relative cursor-pointer" onClick={() => setIsEditMode(!isEditMode)}>
     <img 
-      src="/245.gif"
-      alt="Suicune"
+      src={useStoneStyle ? "/382.gif" : "/245.gif"}
+      alt={useStoneStyle ? "Kyogre" : "Suicune"}
       className="w-26 h-26 object-contain"
     />
     <div className="absolute inset-0 rounded-full hover:bg-white/10 transition-colors" />
@@ -2410,15 +2416,6 @@ ${!isLocked && unlockSelections.has(number)
 }
   transition-all duration-300
 `}
-  style={{
-    '--flash-animation-name': `flash${animationKey}`,
-    '--border-animation-name': `rainbow${animationKey}`,
-    fontSize: `${fontSize * 0.5 + 0.5}rem`, // Dynamic font size: 1rem at size 1, 4rem at size 7
-    padding: `${dynamicPadding}px`,
-    fontFamily: useStoneStyle ? '"Impact", "Arial Black", "Helvetica", sans-serif' : 'inherit',
-    fontWeight: useStoneStyle ? '900' : 'bold',
-    textShadow: useStoneStyle ? '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(255,69,0,0.6)' : 'none'
-  }}
   style={{
     '--flash-animation-name': `flash${animationKey}`,
     '--border-animation-name': `rainbow${animationKey}`,
@@ -2723,6 +2720,12 @@ ${!isLocked && unlockSelections.has(number)
 </AnimatePresence>
 <AnimatePresence>
   {showPlusPopup && <CenterPopup text="+1 Chase" />}
+</AnimatePresence>
+<AnimatePresence>
+  {showZLPopup && <CenterPopup text="Zoom State Saved" />}
+</AnimatePresence>
+<AnimatePresence>
+  {showZRPopup && <CenterPopup text="Reset to Saved Zoom" />}
 </AnimatePresence>
 {/* Bouncing sprite */}
 {spriteActive && (
