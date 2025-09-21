@@ -2103,7 +2103,14 @@ useEffect(() => {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-600 via-teal-500 to-green-400 p-4">
+    <div 
+      className="h-screen p-4"
+      style={{
+        background: useStoneStyle 
+          ? `url('/flamv2.gif') center/cover` 
+          : 'linear-gradient(to bottom right, rgb(37 99 235), rgb(20 184 166), rgb(34 197 94))'
+      }}
+    >
       <div className="h-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl">
         {currentView === 'bags' ? (
           <div className="h-full flex flex-col">
@@ -2325,11 +2332,11 @@ useEffect(() => {
         onClick={() => setUseStoneStyle(!useStoneStyle)}
         className={`px-4 py-2 text-white rounded-lg transition-colors ${
           useStoneStyle 
-            ? 'bg-slate-600 hover:bg-slate-700' 
-            : 'bg-purple-600 hover:bg-purple-700'
+            ? 'bg-orange-600 hover:bg-orange-700' 
+            : 'bg-blue-600 hover:bg-blue-700'
         }`}
       >
-        {useStoneStyle ? 'Stone' : 'Purple'}
+        {useStoneStyle ? 'Fire' : 'Water'}
       </button>
 
       <div className="flex items-center gap-2">
@@ -2389,10 +2396,12 @@ className={`
       ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-white'
       : selectedNumbers.has(number)
       ? useStoneStyle
-        ? 'bg-gradient-to-br from-slate-600 to-slate-800 text-gray-300'
+        ? 'bg-gradient-to-br from-gray-600 to-gray-800 text-amber-200'
         : 'bg-gradient-to-r from-purple-600 to-purple-800 text-white'
       : !isLocked && unlockSelections.has(number)
       ? 'animate-flash text-white'
+      : useStoneStyle
+      ? 'bg-gradient-to-r from-orange-700 to-red-900 text-orange-100 hover:from-orange-600 hover:to-red-800'
       : 'bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-600 hover:to-blue-800'
   }
 ${!isLocked && unlockSelections.has(number)
@@ -2405,7 +2414,19 @@ ${!isLocked && unlockSelections.has(number)
     '--flash-animation-name': `flash${animationKey}`,
     '--border-animation-name': `rainbow${animationKey}`,
     fontSize: `${fontSize * 0.5 + 0.5}rem`, // Dynamic font size: 1rem at size 1, 4rem at size 7
-    padding: `${dynamicPadding}px`
+    padding: `${dynamicPadding}px`,
+    fontFamily: useStoneStyle ? '"Impact", "Arial Black", "Helvetica", sans-serif' : 'inherit',
+    fontWeight: useStoneStyle ? '900' : 'bold',
+    textShadow: useStoneStyle ? '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(255,69,0,0.6)' : 'none'
+  }}
+  style={{
+    '--flash-animation-name': `flash${animationKey}`,
+    '--border-animation-name': `rainbow${animationKey}`,
+    fontSize: `${fontSize * 0.5 + 0.5}rem`, // Dynamic font size: 1rem at size 1, 4rem at size 7
+    padding: `${dynamicPadding}px`,
+    fontFamily: useStoneStyle ? '"Impact", "Arial Black", "Helvetica", sans-serif' : 'inherit',
+    fontWeight: useStoneStyle ? '900' : 'bold',
+    textShadow: useStoneStyle ? '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(255,69,0,0.6)' : 'none'
   }}
   whileHover={{ scale: 1.05 }}
   whileTap={{ scale: 0.95 }}
@@ -2417,7 +2438,7 @@ ${!isLocked && unlockSelections.has(number)
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <div className={`w-full h-0.5 ${useStoneStyle ? 'bg-gray-400' : 'bg-white'} transform rotate-45`} />
+      <div className={`w-full h-0.5 ${useStoneStyle ? 'bg-amber-600' : 'bg-white'} transform rotate-45`} />
     </motion.div>
   )}
   {!selectedNumbers.has(number) && shimmerLevel > 0 && (
