@@ -2130,7 +2130,7 @@ useEffect(() => {
 
   <div className="relative">
     <motion.img 
-  src="/9.gif"
+  src={useStoneStyle ? "/8.gif" : "/9.gif"}
   alt="Blastoise"
   className="w-20 h-20 object-contain cursor-pointer"
   onClick={() => {
@@ -2166,7 +2166,7 @@ useEffect(() => {
 
   <div className="relative">
     <motion.img 
-  src="/9.gif"
+  src={useStoneStyle ? "/8.gif" : "/9.gif"}
   alt="Blastoise"
   className="w-20 h-20 object-contain cursor-pointer"
   onClick={() => {
