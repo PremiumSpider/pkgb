@@ -1905,8 +1905,8 @@ const handleReset = () => {
     localStorage.removeItem(IMAGE_STORAGE_KEY)
     
     setBagCount(50)
-    setChaseCount(8)
-    setRemainingChases(8)
+    setChaseCount(13)
+    setRemainingChases(13)
     setSelectedNumbers(new Set())
     setChaseNumbers(new Set())
     setNumbers(Array.from({ length: 50 }, (_, i) => i + 1))
@@ -1931,10 +1931,11 @@ const handleReset = () => {
 
 const handleResetBags = () => {
   try {
-    // Only reset the bag-related state, keep everything else
+    // Set default total chases to 13 and reset bag-related state
+    setChaseCount(13)
     setSelectedNumbers(new Set())
     setChaseNumbers(new Set())
-    setRemainingChases(chaseCount) // Reset to original chase count
+    setRemainingChases(13) // Reset to default chase count of 13
     setIsCooked(false)
     setUnlockSelections(new Set())
     
@@ -1942,9 +1943,10 @@ const handleResetBags = () => {
     const currentState = JSON.parse(localStorage.getItem('gachaBagState') || '{}')
     const updatedState = {
       ...currentState,
+      chaseCount: 13,
       selectedNumbers: [],
       chaseNumbers: [],
-      remainingChases: chaseCount
+      remainingChases: 13
     }
     localStorage.setItem('gachaBagState', JSON.stringify(updatedState))
   } catch (error) {
