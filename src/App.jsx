@@ -783,9 +783,11 @@ const LockButton = ({ isLocked, onToggle }) => (
 const ProbabilityCalculator = ({ isOpen, onClose, totalBags, totalChases }) => {
   const [bagsDrawn, setBagsDrawn] = useState(3);
   const [chasesHit, setChasesHit] = useState(2);
+  const [localTotalChases, setLocalTotalChases] = useState(totalChases);
+  const [localBagsLeft, setLocalBagsLeft] = useState(totalBags);
 
   // Get the actual remaining bags from the parent component
-  const remainingBags = totalBags;
+  const remainingBags = localBagsLeft;
 
   // Prevent clicks inside modal from closing it
   const handleModalClick = (e) => {
@@ -795,7 +797,7 @@ const ProbabilityCalculator = ({ isOpen, onClose, totalBags, totalChases }) => {
   const calculateProbability = (n, k) => {
     // n = bags drawn, k = chases wanted
     const N = remainingBags; // remaining bags instead of total bags
-    const K = totalChases; // total chases
+    const K = localTotalChases; // total chases
     
     // If trying to draw more bags than available or more chases than exist
     if (n > N || k > K || n < k) return '0.00';
@@ -844,8 +846,42 @@ const ProbabilityCalculator = ({ isOpen, onClose, totalBags, totalChases }) => {
         <div className="space-y-6">
           {/* Current Stats */}
           <div className="bg-black/20 p-4 rounded-lg">
-            <p className="text-white">Total Chases: {totalChases}</p>
-            <p className="text-white mb-2">Bags Left: {remainingBags}</p>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-white">Total Chases:</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setLocalTotalChases(prev => Math.max(0, prev - 1))}
+                  className="w-8 h-8 flex items-center justify-center bg-blue-600/50 hover:bg-blue-500/50 text-white rounded text-xl font-bold transition-colors"
+                >
+                  ←
+                </button>
+                <span className="text-white font-bold w-8 text-center">{localTotalChases}</span>
+                <button
+                  onClick={() => setLocalTotalChases(prev => prev + 1)}
+                  className="w-8 h-8 flex items-center justify-center bg-blue-600/50 hover:bg-blue-500/50 text-white rounded text-xl font-bold transition-colors"
+                >
+                  →
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-white">Bags Left:</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setLocalBagsLeft(prev => Math.max(1, prev - 1))}
+                  className="w-8 h-8 flex items-center justify-center bg-blue-600/50 hover:bg-blue-500/50 text-white rounded text-xl font-bold transition-colors"
+                >
+                  ←
+                </button>
+                <span className="text-white font-bold w-8 text-center">{localBagsLeft}</span>
+                <button
+                  onClick={() => setLocalBagsLeft(prev => prev + 1)}
+                  className="w-8 h-8 flex items-center justify-center bg-blue-600/50 hover:bg-blue-500/50 text-white rounded text-xl font-bold transition-colors"
+                >
+                  →
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Common Scenarios */}
@@ -869,7 +905,7 @@ const ProbabilityCalculator = ({ isOpen, onClose, totalBags, totalChases }) => {
                   value={chasesHit}
                   onChange={(e) => {
                     const value = e.target.value === '' ? '' : parseInt(e.target.value);
-                    setChasesHit(value === '' ? 0 : Math.min(totalChases, Math.max(0, value)));
+                    setChasesHit(value === '' ? 0 : Math.min(localTotalChases, Math.max(0, value)));
                   }}
                   className="w-full px-3 py-2 bg-blue-800/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -881,7 +917,7 @@ const ProbabilityCalculator = ({ isOpen, onClose, totalBags, totalChases }) => {
                   value={bagsDrawn}
                   onChange={(e) => {
                     const value = e.target.value === '' ? '' : parseInt(e.target.value);
-                    setBagsDrawn(value === '' ? 0 : Math.min(remainingBags, Math.max(0, value)));
+                    setBagsDrawn(value === '' ? 0 : Math.min(localBagsLeft, Math.max(0, value)));
                   }}
                   className="w-full px-3 py-2 bg-blue-800/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
