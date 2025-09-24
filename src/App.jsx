@@ -682,6 +682,7 @@ const [storageInfo, setStorageInfo] = useState({ totalSize: 0, imageSize: 0 });
   const [isCooked, setIsCooked] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showResetBagsConfirm, setShowResetBagsConfirm] = useState(false)
   const [prizeImage, setPrizeImage] = useState(null)
   const [marks, setMarks] = useState([])
   const [markSize, setMarkSize] = useState(4)
@@ -910,7 +911,14 @@ const toggleSprite = () => {
     // If turning off, just deactivate
     setSpriteActive(false);
   } else {
-    // If turning on, cycle to next image
+    // If turning on, reset position to center and cycle to next image
+    spriteRef.current = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      dx: 5,
+      dy: 5,
+      rotation: 0
+    };
     setCurrentTargetIndex((prev) => (prev + 1) % targetImages.length);
     setSpriteActive(true);
   }
@@ -1854,7 +1862,9 @@ const handleReset = () => {
     localStorage.removeItem('insuranceMarks')
     localStorage.removeItem('bounties')
     localStorage.removeItem('vintageBagImages')
-    localStorage.removeItem('vintageBagCount')
+    // Keep vintage bag count setting - don't reset this
+    // localStorage.removeItem('vintageBagCount')
+    // Keep vintage bags users data - don't reset this
     // localStorage.removeItem('vintageBagsUsers')
     localStorage.removeItem(IMAGE_STORAGE_KEY)
     
@@ -1880,6 +1890,29 @@ const handleReset = () => {
     setCurrentImageIndex(0)
   } catch (error) {
     console.error('Error resetting state:', error)
+  }
+};
+
+const handleResetBags = () => {
+  try {
+    // Only reset the bag-related state, keep everything else
+    setSelectedNumbers(new Set())
+    setChaseNumbers(new Set())
+    setRemainingChases(chaseCount) // Reset to original chase count
+    setIsCooked(false)
+    setUnlockSelections(new Set())
+    
+    // Update localStorage with the reset bag state
+    const currentState = JSON.parse(localStorage.getItem('gachaBagState') || '{}')
+    const updatedState = {
+      ...currentState,
+      selectedNumbers: [],
+      chaseNumbers: [],
+      remainingChases: chaseCount
+    }
+    localStorage.setItem('gachaBagState', JSON.stringify(updatedState))
+  } catch (error) {
+    console.error('Error resetting bags:', error)
   }
 };
 
@@ -2329,10 +2362,16 @@ useEffect(() => {
 </button>
 
       <button
+        onClick={() => setShowResetBagsConfirm(true)}
+        className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:shadow-lg transition-colors text-base font-medium"
+      >
+        Reset Bgs
+      </button>
+      <button
         onClick={() => setShowResetConfirm(true)}
         className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-colors text-base font-medium"
       >
-        Reset
+        Reset All
       </button>
       <button
         onClick={() => setUseStoneStyle(!useStoneStyle)}
@@ -2520,6 +2559,8 @@ ${!isLocked && unlockSelections.has(number)
                       <p className="text-gray-600">
                         Are you sure you want to reset everything? 
                         <br/>
+                        <span className="text-sm text-green-600">Vintage bags users & count will be preserved! 📦</span>
+                        <br/>
                         <span className="text-sm">This action cannot be undone! 😱</span>
                       </p>
                     </motion.div>
@@ -2540,6 +2581,71 @@ ${!isLocked && unlockSelections.has(number)
                         onClick={handleReset}
                       >
                         Yes, Reset! 💧
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showResetBagsConfirm && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setShowResetBagsConfirm(false)
+                    }
+                  }}
+                >
+                  <motion.div
+                    initial={{ scale: 0, rotate: -10 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    exit={{ scale: 0, rotate: 10 }}
+                    className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl"
+                  >
+                    <motion.div
+                      initial={{ y: -20 }}
+                      animate={{ y: 0 }}
+                      className="text-center mb-6"
+                    >
+                      <motion.div
+                        animate={{ rotate: [0, -5, 5, -5, 5, 0] }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="text-4xl mb-4"
+                      >
+                        🎒
+                      </motion.div>
+                      <h3 className="text-2xl font-bold mb-2 text-orange-500">Reset Bags Only?</h3>
+                      <p className="text-gray-600">
+                        This will only reset your bag selections and chases.
+                        <br/>
+                        <span className="text-sm">Images and other data will be kept! 📦</span>
+                      </p>
+                    </motion.div>
+                    
+                    <div className="flex gap-3 justify-center">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-2 bg-gray-200 rounded-lg text-gray-800 font-medium hover:bg-gray-300 transition-colors"
+                        onClick={() => setShowResetBagsConfirm(false)}
+                      >
+                        Cancel 🚫
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg text-white font-medium hover:shadow-lg transition-all"
+                        onClick={() => {
+                          handleResetBags();
+                          setShowResetBagsConfirm(false);
+                        }}
+                      >
+                        Reset Bags! 🎒
                       </motion.button>
                     </div>
                   </motion.div>
