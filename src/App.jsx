@@ -1398,6 +1398,16 @@ const VintageBags = ({ setCurrentView }) => {
   const [isGalleryEditMode, setIsGalleryEditMode] = useState(false);
   const [hasImages, setHasImages] = useState(false);
 
+  // X marks state for vintage bags
+  const [vintageMarks, setVintageMarks] = useState(() => {
+    const saved = localStorage.getItem('vintageMarks');
+    return saved ? JSON.parse(saved) : [[], [], []];
+  });
+  const [vintageMarkSize, setVintageMarkSize] = useState(4);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsTimeout = useRef(null);
+  const vintageImageContainerRef = useRef(null);
+
   // Effects for persistence
   useEffect(() => {
     const hasAnyImages = vintageImages.some(img => img !== null);
@@ -1423,6 +1433,34 @@ const VintageBags = ({ setCurrentView }) => {
   useEffect(() => {
     localStorage.setItem('vintageBagCount', vintageBagCount.toString());
   }, [vintageBagCount]);
+
+  // Effects for X marks persistence
+  useEffect(() => {
+    localStorage.setItem('vintageMarks', JSON.stringify(vintageMarks));
+  }, [vintageMarks]);
+
+  // Controls visibility effect
+  useEffect(() => {
+    if (!isGalleryEditMode && hasImages) {
+      const hideControls = () => setControlsVisible(false);
+      controlsTimeout.current = setTimeout(hideControls, 2000);
+
+      const handleInteraction = () => {
+        setControlsVisible(true);
+        clearTimeout(controlsTimeout.current);
+        controlsTimeout.current = setTimeout(hideControls, 2000);
+      };
+
+      window.addEventListener('touchstart', handleInteraction);
+      window.addEventListener('mousemove', handleInteraction);
+
+      return () => {
+        clearTimeout(controlsTimeout.current);
+        window.removeEventListener('touchstart', handleInteraction);
+        window.removeEventListener('mousemove', handleInteraction);
+      };
+    }
+  }, [isGalleryEditMode, hasImages]);
 
   // Helper function for gallery navigation
   const getNextValidIndex = (currentIndex, direction) => {
@@ -1549,6 +1587,40 @@ const handleVintageImageUpload = async (index, e) => {
     }
     
     setVintageBagCount(prev => Math.max(1, Math.min(100, prev + increment)));
+  };
+
+  // X mark handlers for vintage bags
+  const handleVintageImageClick = (e) => {
+    if (!vintageImageContainerRef.current) return;
+    
+    const image = vintageImageContainerRef.current.querySelector('img');
+    if (!image) return;
+    
+    const imageRect = image.getBoundingClientRect();
+    const x = (e.clientX - imageRect.left);
+    const y = (e.clientY - imageRect.top);
+    
+    // Adjust the percentage calculation to account for mark size
+    const markSizeInPixels = vintageMarkSize * 16;
+    const xPercent = ((x - (markSizeInPixels/2)) / imageRect.width) * 100;
+    const yPercent = ((y - (markSizeInPixels/2)) / imageRect.height) * 100;
+    
+    const newMarks = [...vintageMarks];
+    newMarks[currentImageIndex] = [
+      ...newMarks[currentImageIndex],
+      { 
+        x: xPercent, 
+        y: yPercent,
+        size: vintageMarkSize
+      }
+    ];
+    setVintageMarks(newMarks);
+  };
+
+  const handleVintageUndo = () => {
+    const newMarks = [...vintageMarks];
+    newMarks[currentImageIndex] = newMarks[currentImageIndex].slice(0, -1);
+    setVintageMarks(newMarks);
   };
 
  return (
@@ -1772,6 +1844,40 @@ const handleVintageImageUpload = async (index, e) => {
               </div>
             ) : (
               <div className="relative w-full h-full">
+                {/* X Mark Controls - Only show when controls are visible and has images */}
+                <AnimatePresence>
+                  {controlsVisible && hasImages && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="absolute top-4 left-4 z-50 flex flex-wrap gap-4"
+                    >
+                      {vintageMarks[currentImageIndex]?.length > 0 && (
+                        <button
+                          onClick={handleVintageUndo}
+                          className="px-6 py-3 bg-blue-900/40 hover:bg-blue-800/50 text-white rounded-lg transition-colors text-lg md:text-xl"
+                        >
+                          Undo Mark
+                        </button>
+                      )}
+
+                      <div className="flex items-center gap-3 bg-blue-900/40 p-3 rounded-lg">
+                        <span className="text-white text-lg md:text-xl">Mark Size:</span>
+                        <input
+                          type="range"
+                          min="2"
+                          max="8"
+                          value={vintageMarkSize}
+                          onChange={(e) => setVintageMarkSize(Number(e.target.value))}
+                          className="w-32 h-2 bg-blue-800/30 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <span className="text-white w-8 text-center text-lg md:text-xl">{vintageMarkSize}</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <TransformWrapper
                   initialScale={1}
                   minScale={0.5}
@@ -1783,13 +1889,43 @@ const handleVintageImageUpload = async (index, e) => {
                     wrapperClass="!w-full !h-full"
                     contentClass="!w-full !h-full"
                   >
-                    {vintageImages[currentImageIndex] && (
-                      <img
-                        src={vintageImages[currentImageIndex]}
-                        alt={`Vintage ${currentImageIndex + 1}`}
-                        className="w-full h-full object-contain"
-                      />
-                    )}
+                    <div 
+                      className="relative w-full h-full" 
+                      onClick={hasImages ? handleVintageImageClick : undefined}
+                      ref={vintageImageContainerRef}
+                    >
+                      {vintageImages[currentImageIndex] && (
+                        <>
+                          <img
+                            src={vintageImages[currentImageIndex]}
+                            alt={`Vintage ${currentImageIndex + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                          {/* Render X marks */}
+                          {vintageMarks[currentImageIndex]?.map((mark, index) => (
+                            <motion.div
+                              key={index}
+                              className="absolute text-red-500 font-bold pointer-events-none"
+                              style={{ 
+                                left: `${mark.x}%`,
+                                top: `${mark.y}%`,
+                                fontSize: `${mark.size || vintageMarkSize}rem`,
+                                textShadow: `
+                                  -3px -3px 0 #000,
+                                  3px -3px 0 #000,
+                                  -3px 3px 0 #000,
+                                  3px 3px 0 #000
+                                `
+                              }}
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                            >
+                              ✕
+                            </motion.div>
+                          ))}
+                        </>
+                      )}
+                    </div>
                   </TransformComponent>
                 </TransformWrapper>
 
